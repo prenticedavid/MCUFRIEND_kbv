@@ -575,6 +575,14 @@ void MCUFRIEND_kbv::setAddrWindow(int16_t x, int16_t y, int16_t x1, int16_t y1)
     }
 }
 
+
+void MCUFRIEND_kbv::setBacklight(uint8_t x){
+    #if defined(BACKLIGHT)
+        setBacklightToValue(x);
+    #endif
+}
+
+
 void MCUFRIEND_kbv::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
     int16_t end;
@@ -3076,5 +3084,9 @@ case 0x4532:    // thanks Leodino
 			is555 = 1;
 		}
 	}
+#endif
+
+#ifdef BACKLIGHT
+    enableBacklight();
 #endif
 }
