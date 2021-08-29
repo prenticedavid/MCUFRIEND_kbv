@@ -1411,11 +1411,11 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
             (0xD0), 1, 0x0D,
         };
 //        table8_ads = SSD1963_480_regValues, table_size = sizeof(SSD1963_480_regValues);
-        table8_ads = SSD1963_800_regValues, table_size = sizeof(SSD1963_800_regValues);
+//        table8_ads = SSD1963_800_regValues, table_size = sizeof(SSD1963_800_regValues);
 //        table8_ads = SSD1963_NHD_50_regValues, table_size = sizeof(SSD1963_NHD_50_regValues);
 //        table8_ads = SSD1963_NHD_70_regValues, table_size = sizeof(SSD1963_NHD_70_regValues);
 //        table8_ads = SSD1963_800NEW_regValues, table_size = sizeof(SSD1963_800NEW_regValues);
-//        table8_ads = SSD1963_800ALT_regValues, table_size = sizeof(SSD1963_800ALT_regValues);
+        table8_ads = SSD1963_800ALT_regValues, table_size = sizeof(SSD1963_800ALT_regValues);
         p16 = (int16_t *) & HEIGHT;
         *p16 = 480;
         p16 = (int16_t *) & WIDTH;
