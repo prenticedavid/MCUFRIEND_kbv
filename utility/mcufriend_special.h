@@ -2,7 +2,7 @@
 
 //#define USE_MEGA_8BIT_PROTOSHIELD
 //#define USE_MEGA_8BIT_SHIELD      // 4.7sec Mega2560 Shield
-//#define USE_MEGA_8BIT_PORTC_SHIELD // 4.7sec Mega2560 Shield
+#define USE_MEGA_8BIT_PORTC_SHIELD // 4.7sec Mega2560 Shield
 //#define USE_MEGA_16BIT_SHIELD     // 2.14sec Mega2560 Shield 
 //#define USE_BLD_BST_MEGA32U4
 //#define USE_BLD_BST_MEGA2560      // 12.23sec Uno Shield (17.38s C)
