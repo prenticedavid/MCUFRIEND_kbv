@@ -1273,7 +1273,7 @@ void MCUFRIEND_kbv::begin(uint16_t ID)
 
 #if defined(SUPPORT_1963) 
     case 0x1963:
-        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | READ_NODUMMY | INVERT_SS | INVERT_RGB;
+        _lcd_capable = AUTO_READINC | MIPI_DCS_REV1 | READ_NODUMMY | INVERT_SS //| INVERT_RGB;
 #if USING_16BIT_BUS
 #define SSD1963_PIXDATA 0x03
 #else
