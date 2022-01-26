@@ -46,9 +46,9 @@ ST7796S  tWC = 66ns  tWRH = 15ns  tRCFM = 450ns  tRC = 160ns
 
 //################################# MKR2UNO ############################
 #elif defined(__SAMD21G18A__) && defined(USR_MKR2UNO) //regular UNO shield on MKE2UNO Adapter
-//LCD pins   |D7  |D6  |D5  |D4  |D3  |D2  |D1  |D0  | |RD |WR |RS  |CS  |RST |
-//SAMD21 pin |PA21|PA20|PB11|PB10|PA11|PA10|PA17|PA16| |PA2|PB2|PB3 |PA4 |PA5 |
-//UNO pins   |7   |6   |5   |4   |3   |2   |9   |8   | |A0 |A1 |A2  |A3  |A4  |
+//LCD pins   |D7  |D6  |D5  |D4  |D3  |D2  |D1  |D0  | |RD |WR |RS  |CS  |RST | |SDCS|SDDI|SDDO|SDSCK|
+//SAMD21 pin |PA21|PA20|PB11|PB10|PA11|PA10|PA17|PA16| |PA2|PB2|PB3 |PA4 |PA5 | |PA23|PA8 |PA9 |PA22 |
+//MKR2UNO pin|7   |6   |5   |4   |3   |2   |9   |8   | |A0 |A1 |A2  |A3  |A4  | |10  |11  |12  |13   |
 #include "sam.h"
  // configure macros for the control pins
 #define RD_PORT PORT->Group[0]
