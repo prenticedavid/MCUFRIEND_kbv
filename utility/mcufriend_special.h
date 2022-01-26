@@ -19,6 +19,7 @@
 //#define USE_MIKROELEKTRONIKA
 //#define USE_XPRO_MEGA4809
 //#define USE_MY_PICO
+//#define USE_MKR2UNO
 
 /*
 HX8347A  tWC =100ns  tWRH = 35ns  tRCFM = 450ns  tRC = ?  ns
@@ -42,6 +43,58 @@ ST7796S  tWC = 66ns  tWRH = 15ns  tRCFM = 450ns  tRC = 160ns
 */
 
 #if 0
+
+//################################# MKR2UNO ############################
+#elif defined(__SAMD21G18A__) && defined(USR_MKR2UNO) //regular UNO shield on MKE2UNO Adapter
+//LCD pins   |D7  |D6  |D5  |D4  |D3  |D2  |D1  |D0  | |RD |WR |RS  |CS  |RST |
+//SAMD21 pin |PA21|PA20|PB11|PB10|PA11|PA10|PA17|PA16| |PA2|PB2|PB3 |PA4 |PA5 |
+//UNO pins   |7   |6   |5   |4   |3   |2   |9   |8   | |A0 |A1 |A2  |A3  |A4  |
+#include "sam.h"
+ // configure macros for the control pins
+#define RD_PORT PORT->Group[0]
+#define RD_PIN  2
+#define WR_PORT PORT->Group[1]
+#define WR_PIN  2
+#define CD_PORT PORT->Group[1]
+#define CD_PIN  3
+#define CS_PORT PORT->Group[0]
+#define CS_PIN  4
+#define RESET_PORT PORT->Group[0]
+#define RESET_PIN  5
+ // configure macros for data bus
+#define AMASK ((3<<20)|(3<<10)|(3<<16)) //|PA21|PA20|PA11|PA10|PA17|PA16|
+#define BMASK ((1<<11)|(1<<10))         //|PB11|PB10|
+#define WRMASK        ((0<<22) | (1<<28) | (1<<30)) //
+#define RDMASK        ((1<<17) | (1<<28) | (1<<30)) //
+#define write_8(x) {\
+    PORT->Group[0].OUTCLR.reg = AMASK;PORT->Group[1].OUTCLR.reg = BMASK;\
+    PORT->Group[0].OUTSET.reg = (((x) & (3<<0)) << 16)\
+                               |(((x) & (3<<2)) << 8)\
+                               |(((x) & (3<<6)) << 14);\
+    PORT->Group[1].OUTSET.reg = (((x) & (3<<4)) << 6);\
+                   }
+#define read_8()   (((PORT->Group[0].IN.reg >> 16) & (3<<0))\
+                   |((PORT->Group[0].IN.reg >> 8) & (3<<2))\
+                   |((PORT->Group[1].IN.reg >> 6) &  (3<<4))\
+                   |((PORT->Group[0].IN.reg >> 14) & (3<<6)))
+#define setWriteDir() { PORT->Group[0].DIRSET.reg = AMASK;PORT->Group[0].DIRSET.reg = BMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK & 0xFFFF) | WRMASK; \
+                      PORT->Group[1].WRCONFIG.reg = (BMASK & 0xFFFF) | WRMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK>>16) | WRMASK | (1<<31); \
+                        }
+#define setReadDir()  { PORT->Group[0].DIRCLR.reg = AMASK;PORT->Group[1].DIRCLR.reg = BMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK & 0xFFFF) | RDMASK; \
+                      PORT->Group[1].WRCONFIG.reg = (BMASK & 0xFFFF) | RDMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK>>16) | RDMASK | (1<<31); \
+                        }
+#define write8(x)     { write_8(x); WR_ACTIVE; WR_STROBE; }
+#define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
+#define READ_8(dst)   { RD_STROBE; dst = read_8(); RD_IDLE; }
+#define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
+ // Shield Control macros.
+#define PIN_LOW(port, pin)    (port).OUTCLR.reg = (1<<(pin))
+#define PIN_HIGH(port, pin)   (port).OUTSET.reg = (1<<(pin))
+#define PIN_OUTPUT(port, pin) (port).DIR.reg |= (1<<(pin))
 
 //################################### RP2040 ##############################
 #elif defined(USE_MY_PICO) && defined(ARDUINO_ARCH_RP2040)       //regular UNO shield on PICO
