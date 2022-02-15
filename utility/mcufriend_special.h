@@ -880,6 +880,9 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 //Due pins   |43  |39  |38  |40  |41  |
 #warning USE_MEGA_16BIT_SHIELD
 #define USES_16BIT_BUS
+#define WRITE_DELAY { WR_ACTIVE4; WR_ACTIVE2; }
+#define IDLE_DELAY  { }
+#define READ_DELAY  { RD_ACTIVE4; }
 // configure macros for the control pins
 #define RD_PORT PIOA
 #define RD_PIN  20     //D43
@@ -947,8 +950,8 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 					  }
 #define write8(x)     { write16(x & 0xFF); }
 // ILI9486 is slower than ILI9481
-#define write16(x)    { write_16(x); WR_ACTIVE8; WR_STROBE; WR_IDLE4;}
-#define READ_16(dst)  { RD_STROBE; RD_ACTIVE4; dst = read_16(); RD_IDLE; RD_IDLE; RD_IDLE; }
+#define write16(x)    { write_16(x); WRITE_DELAY; WR_STROBE; IDLE_DELAY;}
+#define READ_16(dst)  { RD_STROBE; READ_DELAY; dst = read_16(); RD_IDLE2; }
 #define READ_8(dst)   { READ_16(dst); dst &= 0xFF; }
 
 // Shield Control macros.
@@ -961,6 +964,9 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 //SAM3XE pin |PD6 |PD3 |PD2 |PD1 |PD0 |PA15|PA14|PB26|  |PA20|PC7 |PC6 |PC8 |PC9 |
 //Due pins   |29  |28  |27  |26  |25  |24  |23  |22  |  |43  |39  |38  |40  |41  |
 #warning USE_MEGA_8BIT_SHIELD for peloxp
+#define WRITE_DELAY { WR_ACTIVE4; }
+#define IDLE_DELAY  { }
+#define READ_DELAY  { RD_ACTIVE4; }
 // configure macros for the control pins
 #define RD_PORT PIOA
 #define RD_PIN  20     //D43
@@ -1005,9 +1011,9 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 					  }
 
 // ILI9486 is slower than ILI9481. HX8357-D is slower
-#define write8(x)     { write_8(x); WR_ACTIVE4; WR_STROBE; WR_IDLE; WR_IDLE; }
+#define write8(x)     { write_8(x); WRITE_DELAY; WR_STROBE; IDLE_DELAY; }
 #define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
-#define READ_8(dst)   { RD_STROBE; RD_ACTIVE4; dst = read_8(); RD_IDLE; RD_IDLE; RD_IDLE; }
+#define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE2; }
 #define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
 
 // Shield Control macros.
@@ -1020,6 +1026,9 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 //SAM3XE pin |PD9 |PA7 |PD10|PC1 |PC2 |PC3 |PC4 |PC5 |  |PA20|PC7 |PC6 |PC8 |PC9 |
 //Due pins   |30  |31  |32  |33  |34  |35  |36  |37  |  |43  |39  |38  |40  |41  |
 #warning USE_MEGA_8BIT_PORTC_SHIELD on DUE
+#define WRITE_DELAY { }
+#define IDLE_DELAY  { }
+#define READ_DELAY  { RD_ACTIVE4; }
 // configure macros for the control pins
 #define RD_PORT PIOA
 #define RD_PIN  20     //D43
@@ -1071,9 +1080,9 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 					  }
 
 // ILI9486 is slower than ILI9481. HX8357-D is slower
-#define write8(x)     { write_8(x); WR_ACTIVE4; WR_STROBE; WR_IDLE; WR_IDLE; }
+#define write8(x)     { write_8(x); WRITE_DELAY; WR_STROBE; IDLE_DELAY; }
 #define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
-#define READ_8(dst)   { RD_STROBE; RD_ACTIVE4; dst = read_8(); RD_IDLE; RD_IDLE; RD_IDLE; }
+#define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE2; }
 #define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
 
 // Shield Control macros.
