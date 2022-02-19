@@ -19,6 +19,7 @@
 //#define USE_MIKROELEKTRONIKA
 //#define USE_XPRO_MEGA4809
 //#define USE_MY_PICO
+#define USE_OPENSMART_AVR
 
 /*
 HX8347A  tWC =100ns  tWRH = 35ns  tRCFM = 450ns  tRC = ?  ns
@@ -470,6 +471,55 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 #define PIN_LOW(port, pin)    (port)->PIO_CODR = (1<<(pin))
 #define PIN_HIGH(port, pin)   (port)->PIO_SODR = (1<<(pin))
 #define PIN_OUTPUT(port, pin) (port)->PIO_OER = (1<<(pin))
+
+#elif defined(__AVR_ATmega328PB__) && defined(USE_OPENSMART_AVR)
+//SD pins           |SCK|   |DI |                                               |CS |DO |
+//LCD pins  |D7 |D6 |D5 |D4 |D3 |D2 |D1 |D0 | |RD |WR |RS |CS |RST| |BACKLIGHT| 
+//AVR   pin |PD7|PD6|PB5|PD4|PB3|PB2|PB1|PB0| |PC0|PC1|PC2|PC3|PD2| |PD3|       |PD5|PB4|
+//UNO pins  |7  |6  |13 |4  |11 |10 |9  |8  | |A0 |A1 |A2 |A3 |2  | |3  |       |5  |12 |
+#define RD_PORT PORTC
+#define RD_PIN  0
+#define WR_PORT PORTC
+#define WR_PIN  1
+#define CD_PORT PORTC
+#define CD_PIN  2
+#define CS_PORT PORTC
+#define CS_PIN  3
+#define RESET_PORT PORTD 
+#define RESET_PIN  2 
+
+#define BACKLIGHT
+#if defined(BACKLIGHT)
+  #define BACKLIGHT_PORT PORTD
+  #define BACKLIGHT_PIN 3
+#endif
+
+#define BMASK         B00101111
+#define DMASK         B11010000
+
+#define write_8(x) {                          \
+        PORTD = (PORTD & ~DMASK) | ((x) & DMASK); \
+        PORTB = (PORTB & ~BMASK) | ((x) & BMASK);} // STROBEs are defined later
+
+#define read_8()   ((PIND & DMASK) | (PINB & BMASK))
+
+#define setWriteDir() { DDRD |=  DMASK; DDRB |=  BMASK; }
+#define setReadDir()  { DDRD &= ~DMASK; DDRB &= ~BMASK; }
+
+#define enableBacklight() {\
+        BACKLIGHT_PORT |= (1 << BACKLIGHT_PIN); \
+        OCR2B = 128; TCCR2A = _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);  \
+        }
+#define setBacklightToValue(x) { OCR2B = x; }
+
+#define write8(x)     {  write_8(x); WR_STROBE;  }
+#define write16(x)    {  uint8_t h = (x)>>8, l = x; write8(h); write8(l);  }
+#define READ_8(dst)   {  RD_STROBE; dst = read_8(); RD_IDLE;  }
+#define READ_16(dst)  {  uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8);  }
+
+#define PIN_LOW(p, b)        (p) &= ~(1<<(b))
+#define PIN_HIGH(p, b)       (p) |= (1<<(b))
+#define PIN_OUTPUT(p, b)     *(&p-1) |= (1<<(b))
 
 #elif defined(__AVR_ATmega2560__) && defined(USE_BLD_BST_MEGA2560)   //regular UNO shield on MEGA2560 using BLD/BST
 #warning regular UNO shield on MEGA2560 using BLD/BST
@@ -1174,3 +1224,4 @@ static __attribute((always_inline)) void write_8(uint8_t val)
 #else
 #define USE_SPECIAL_FAIL
 #endif
+
