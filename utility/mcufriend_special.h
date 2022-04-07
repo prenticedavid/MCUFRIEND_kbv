@@ -50,11 +50,11 @@ ST7796S  tWC = 66ns  tWRH = 15ns  tRCFM = 450ns  tRC = 160ns
 //################################### Curiosity AVR128DA48 ##############################
 #elif defined(__AVR_AVR128DA48__) && defined(USE_CURIOSITY_AVR128DA48)     // 
 #warning Curiosity AVR128DA48
-//LCD pins  |D7 |D6 |D5 |D4 |D3 |D2 |D1 |D0 | |RD |WR |RS |CS |RST|
-//DA48  pin |PA3|PA2|PB5|PB4|PB3|PB2|PB1|PB0| |PD0|PD1|PD2|PD3|PD4|
-//DB48  pin |PC7|PC6|PC5|PC4|PC3|PC2|PC1|PC0| |PD0|PD1|PD2|PD4|PD5|
-//Curiosity |37 |36 |35 |34 |23 |22 |21 |20 | |46 |47 |48 |43 |44 |
-//UNO pins  |7  |6  |5  |4  |3  |2  |9  |8  | |A0 |A1 |A2 |A3 |A4 |
+//LCD pins  |D7 |D6 |D5 |D4 |D3 |D2 |D1 |D0 | |RD |WR |RS |CS |RST| |SDA0|SCL0| |SDA1|SCL1|
+//DA48  pin |PA3|PA2|PB5|PB4|PB3|PB2|PB1|PB0| |PD0|PD1|PD2|PD3|PD4| |PC2 |PC3 | |PF2 |PF3 |
+//DB48  pin |PC7|PC6|PC5|PC4|PC3|PC2|PC1|PC0| |PD0|PD1|PD2|PD4|PD5| |PA2 |PA3 | |PF2 |PF3 |
+//Curiosity |37 |36 |35 |34 |23 |22 |21 |20 | |46 |47 |48 |43 |44 | |9   |10  | |18  |19  |
+//UNO pins  |7  |6  |5  |4  |3  |2  |9  |8  | |A0 |A1 |A2 |A3 |A4 | |18  |19  |
 
 #define WRITE_DELAY {  }
 #define READ_DELAY  { RD_ACTIVE2; }
@@ -269,11 +269,15 @@ ST7796S  tWC = 66ns  tWRH = 15ns  tRCFM = 450ns  tRC = 160ns
 #define RESET_PIN  1
 
 #elif defined(__AVR_ATxmega128A1__)
-#warning Home made shield with Xplained A1 CTL=J4 (PC), DATA=J2 (PA)
 #define VPMAP10 0x50    // VPORT0=A, 1=F, 2=C, 3=D
 #define VPMAP32 0x32    // VPORT0=A, 1=F, 2=C, 3=D
 #define DATPORT VPORT0  //PORTA
-#define CTLPORT VPORT2  //PORTC
+#define CTLPORT VPORT1  //PORTF i.e. CTL=J1 (PF), DATA=J2 (PA)
+#warning Home made shield with Xplained A1 CTL=J1 (PF), DATA=J2 (PA)
+//#define CTLPORT VPORT2  //PORTC i.e. CTL=J4 (PC), DATA=J2 (PA) upsets Serial on PC2,PC3
+//#warning Home made shield with Xplained A1 CTL=J4 (PC), DATA=J2 (PA) upsets Serial on PC2,PC3
+//#define CTLPORT VPORT3  //PORTD i.e. CTL=J3 (PD), DATA=J2 (PA) note J3 VCC pin=5V0
+//#warning Home made shield with Xplained A1 CTL=J3 (PD), DATA=J2 (PA) note J3 VCC pin=5V0
 #define RD_PORT CTLPORT //PC0.
 #define RD_PIN  0
 #define WR_PORT CTLPORT
