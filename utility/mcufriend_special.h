@@ -22,6 +22,7 @@
 //#define USE_MKR2UNO
 //#define USE_CURIOSITY_AVR128DA48
 //#define USE_CURIOSITY_AVR128DB48
+#define USE_COOCOX_STM32
 
 
 /*
@@ -46,6 +47,75 @@ ST7796S  tWC = 66ns  tWRH = 15ns  tRCFM = 450ns  tRC = 160ns
 */
 
 #if 0
+
+//################################### COOCOX_STM32 on STM32103RB ##############################
+#elif defined(USE_COOCOX_STM32) && (defined(ARDUINO_GENERIC_STM32F103R)||defined(ARDUINO_GENERIC_F103RBTX))
+#warning Uno Shield on USE_COOCOX_STM32
+
+//LCD pins  |D7 |D6 |D5 |D4 |D3 |D2  |D1 |D0  | |RD |WR |RS |CS |RST| |SD_SS|SD_DI|SD_DO|SD_SCK| |SDA|SCL|
+//STM32 pin |PD2|PC9|PC8|PC7|PC6|PC12|PA8|PA15| |PC0|PC1|PC2|PC3|PB7| |PB12 |PB15 |PB14 |PB13  | |PB7|PB6|
+
+#if defined(ARDUINO_GENERIC_F103RBTX)   //regular CMSIS libraries
+#define REGS(x) x
+#define GPIO_INIT()   { RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN | RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN | RCC_APB2ENR_AFIOEN; \
+        AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_1;}
+#else                                                                  //weird Maple libraries
+#define REGS(x) regs->x
+#endif
+
+#define WRITE_DELAY { }
+#define READ_DELAY  { RD_ACTIVE4; }
+#define GROUP_MODE(port, reg, mask, val)  {port->REGS(reg) = (port->REGS(reg) & ~(mask)) | ((mask)&(val)); }
+#define GP_OUT(port, reg, mask)           GROUP_MODE(port, reg, mask, 0x33333333)
+#define GP_INP(port, reg, mask)           GROUP_MODE(port, reg, mask, 0x44444444)
+#define PIN_OUTPUT(port, pin) {\
+        if (pin < 8) {GP_OUT(port, CRL, 0xF<<((pin)<<2));} \
+        else {GP_OUT(port, CRH, 0xF<<((pin&7)<<2));} \
+    }
+#define PIN_INPUT(port, pin) { \
+        if (pin < 8) { GP_INP(port, CRL, 0xF<<((pin)<<2)); } \
+        else { GP_INP(port, CRH, 0xF<<((pin&7)<<2)); } \
+    }
+#define PIN_HIGH(port, pin)   (port)-> REGS(BSRR) = (1<<(pin))
+#define PIN_LOW(port, pin)    (port)-> REGS(BSRR) = (1<<((pin)+16))
+
+#define RD_PORT GPIOC
+#define RD_PIN  0
+#define WR_PORT GPIOC
+#define WR_PIN  1
+#define CD_PORT GPIOC
+#define CD_PIN  2
+#define CS_PORT GPIOC
+#define CS_PIN  3
+#define RESET_PORT GPIOB
+#define RESET_PIN  7
+
+// configure macros for the data pins
+#define AMASK ((1<<8)|(1<<15))
+#define CMASK ((15<<6)|(1<<12))
+#define DMASK (1<<2)
+#define write_8(d)    { GPIOA->REGS(BSRR) = AMASK << 16; GPIOC->REGS(BSRR) = CMASK << 16;\
+                        GPIOD->REGS(BSRR) = DMASK << 16; \
+                        GPIOA->REGS(BSRR) = (((d) & (1<<0)) << 15); \
+                        GPIOA->REGS(BSRR) = (((d) & (1<<1)) << 4); \
+                        GPIOC->REGS(BSRR) = (((d) & (1<<2)) << 10); \
+                        GPIOC->REGS(BSRR) = (((d) &(15<<3)) << 3); \
+                        GPIOD->REGS(BSRR) = (((d) & (1<<7)) >> 5); \
+                      }
+#define read_8()     ( ((GPIOA->REGS(IDR) & (1<<15)) >> 15) \
+                     | ((GPIOA->REGS(IDR) & (1<<8))  >> 7) \
+                     | ((GPIOC->REGS(IDR) & (1<<12)) >> 10) \
+                     | ((GPIOC->REGS(IDR) & (15<<6)) >> 3) \
+                     | ((GPIOD->REGS(IDR) & (1<<2))  << 5) \
+                     )
+//                                          PA15,PA8                 PC12,PC9-PC8                         PC7,PC6                        PD2
+#define setWriteDir() {GP_OUT(GPIOA, CRH, 0xF000000F); GP_OUT(GPIOC, CRH, 0xF00FF); GP_OUT(GPIOC, CRL, 0xFF000000); GP_OUT(GPIOD, CRL, 0xF00); }
+#define setReadDir()  {GP_INP(GPIOA, CRH, 0xF000000F); GP_INP(GPIOC, CRH, 0xF00FF); GP_INP(GPIOC, CRL, 0xFF000000); GP_INP(GPIOD, CRL, 0xF00); }
+
+#define write8(x)     { write_8(x); WRITE_DELAY; WR_STROBE; }
+#define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
+#define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE; }
+#define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
 
 //################################### Curiosity AVR128DA48 ##############################
 #elif defined(__AVR_AVR128DA48__) && defined(USE_CURIOSITY_AVR128DA48)     // 
