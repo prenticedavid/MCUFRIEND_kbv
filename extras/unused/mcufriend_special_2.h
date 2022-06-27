@@ -1789,4 +1789,127 @@ static void setReadDir()
 #define PIN_HIGH(p, b)       (digitalWrite(b, HIGH))
 #define PIN_OUTPUT(p, b)     (pinMode(b, OUTPUT))
 
+//#### UNTESTED ############### COOCOX_STM32 on STM32103RB ##############################
+//#define USE_COOCOX_STM32
+#elif defined(USE_COOCOX_STM32) && (defined(ARDUINO_GENERIC_STM32F103R)||defined(ARDUINO_GENERIC_F103RBTX))
+#warning Uno Shield on USE_COOCOX_STM32
+
+//LCD pins  |D7 |D6 |D5 |D4 |D3 |D2  |D1 |D0  | |RD |WR |RS |CS |RST| |SD_SS|SD_DI|SD_DO|SD_SCK| |SDA|SCL|
+//STM32 pin |PD2|PC9|PC8|PC7|PC6|PC12|PA8|PA15| |PC0|PC1|PC2|PC3|PB7| |PB12 |PB15 |PB14 |PB13  | |PB7|PB6|
+
+#if defined(ARDUINO_GENERIC_F103RBTX)   //regular CMSIS libraries
+#define REGS(x) x
+#define GPIO_INIT()   { RCC->APB2ENR |= RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN | RCC_APB2ENR_IOPCEN | RCC_APB2ENR_IOPDEN | RCC_APB2ENR_AFIOEN; \
+        AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_1;}
+#else                                                                  //weird Maple libraries
+#define REGS(x) regs->x
+#endif
+
+#define WRITE_DELAY { }
+#define READ_DELAY  { RD_ACTIVE4; }
+#define GROUP_MODE(port, reg, mask, val)  {port->REGS(reg) = (port->REGS(reg) & ~(mask)) | ((mask)&(val)); }
+#define GP_OUT(port, reg, mask)           GROUP_MODE(port, reg, mask, 0x33333333)
+#define GP_INP(port, reg, mask)           GROUP_MODE(port, reg, mask, 0x44444444)
+#define PIN_OUTPUT(port, pin) {\
+        if (pin < 8) {GP_OUT(port, CRL, 0xF<<((pin)<<2));} \
+        else {GP_OUT(port, CRH, 0xF<<((pin&7)<<2));} \
+    }
+#define PIN_INPUT(port, pin) { \
+        if (pin < 8) { GP_INP(port, CRL, 0xF<<((pin)<<2)); } \
+        else { GP_INP(port, CRH, 0xF<<((pin&7)<<2)); } \
+    }
+#define PIN_HIGH(port, pin)   (port)-> REGS(BSRR) = (1<<(pin))
+#define PIN_LOW(port, pin)    (port)-> REGS(BSRR) = (1<<((pin)+16))
+
+#define RD_PORT GPIOC
+#define RD_PIN  0
+#define WR_PORT GPIOC
+#define WR_PIN  1
+#define CD_PORT GPIOC
+#define CD_PIN  2
+#define CS_PORT GPIOC
+#define CS_PIN  3
+#define RESET_PORT GPIOB
+#define RESET_PIN  7
+
+// configure macros for the data pins
+#define AMASK ((1<<8)|(1<<15))
+#define CMASK ((15<<6)|(1<<12))
+#define DMASK (1<<2)
+#define write_8(d)    { GPIOA->REGS(BSRR) = AMASK << 16; GPIOC->REGS(BSRR) = CMASK << 16;\
+                        GPIOD->REGS(BSRR) = DMASK << 16; \
+                        GPIOA->REGS(BSRR) = (((d) & (1<<0)) << 15); \
+                        GPIOA->REGS(BSRR) = (((d) & (1<<1)) << 4); \
+                        GPIOC->REGS(BSRR) = (((d) & (1<<2)) << 10); \
+                        GPIOC->REGS(BSRR) = (((d) &(15<<3)) << 3); \
+                        GPIOD->REGS(BSRR) = (((d) & (1<<7)) >> 5); \
+                      }
+#define read_8()     ( ((GPIOA->REGS(IDR) & (1<<15)) >> 15) \
+                     | ((GPIOA->REGS(IDR) & (1<<8))  >> 7) \
+                     | ((GPIOC->REGS(IDR) & (1<<12)) >> 10) \
+                     | ((GPIOC->REGS(IDR) & (15<<6)) >> 3) \
+                     | ((GPIOD->REGS(IDR) & (1<<2))  << 5) \
+                     )
+//                                          PA15,PA8                 PC12,PC9-PC8                         PC7,PC6                        PD2
+#define setWriteDir() {GP_OUT(GPIOA, CRH, 0xF000000F); GP_OUT(GPIOC, CRH, 0xF00FF); GP_OUT(GPIOC, CRL, 0xFF000000); GP_OUT(GPIOD, CRL, 0xF00); }
+#define setReadDir()  {GP_INP(GPIOA, CRH, 0xF000000F); GP_INP(GPIOC, CRH, 0xF00FF); GP_INP(GPIOC, CRL, 0xFF000000); GP_INP(GPIOD, CRL, 0xF00); }
+
+#define write8(x)     { write_8(x); WRITE_DELAY; WR_STROBE; }
+#define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
+#define READ_8(dst)   { RD_STROBE; READ_DELAY; dst = read_8(); RD_IDLE; }
+#define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
+
+//#### UNTESTED ############# MKR2UNO ############################
+//#define USE_MKR2UNO
+#elif defined(__SAMD21G18A__) && defined(USE_MKR2UNO) //regular UNO shield on MKE2UNO Adapter
+//LCD pins   |D7  |D6  |D5  |D4  |D3  |D2  |D1  |D0  | |RD |WR |RS  |CS  |RST | |SDCS|SDDI|SDDO|SDSCK|
+//SAMD21 pin |PA21|PA20|PB11|PB10|PA11|PA10|PA17|PA16| |PA2|PB2|PB3 |PA4 |PA5 | |PA23|PA8 |PA9 |PA22 |
+//MKR2UNO pin|7   |6   |5   |4   |3   |2   |9   |8   | |A0 |A1 |A2  |A3  |A4  | |10  |11  |12  |13   |
+#include "sam.h"
+ // configure macros for the control pins
+#define RD_PORT PORT->Group[0]
+#define RD_PIN  2
+#define WR_PORT PORT->Group[1]
+#define WR_PIN  2
+#define CD_PORT PORT->Group[1]
+#define CD_PIN  3
+#define CS_PORT PORT->Group[0]
+#define CS_PIN  4
+#define RESET_PORT PORT->Group[0]
+#define RESET_PIN  5
+ // configure macros for data bus
+#define AMASK ((3<<20)|(3<<10)|(3<<16)) //|PA21|PA20|PA11|PA10|PA17|PA16|
+#define BMASK ((1<<11)|(1<<10))         //|PB11|PB10|
+#define WRMASK        ((0<<22) | (1<<28) | (1<<30)) //
+#define RDMASK        ((1<<17) | (1<<28) | (1<<30)) //
+#define write_8(x) {\
+    PORT->Group[0].OUTCLR.reg = AMASK;PORT->Group[1].OUTCLR.reg = BMASK;\
+    PORT->Group[0].OUTSET.reg = (((x) & (3<<0)) << 16)\
+                               |(((x) & (3<<2)) << 8)\
+                               |(((x) & (3<<6)) << 14);\
+    PORT->Group[1].OUTSET.reg = (((x) & (3<<4)) << 6);\
+                   }
+#define read_8()   (((PORT->Group[0].IN.reg >> 16) & (3<<0))\
+                   |((PORT->Group[0].IN.reg >> 8) & (3<<2))\
+                   |((PORT->Group[1].IN.reg >> 6) &  (3<<4))\
+                   |((PORT->Group[0].IN.reg >> 14) & (3<<6)))
+#define setWriteDir() { PORT->Group[0].DIRSET.reg = AMASK;PORT->Group[0].DIRSET.reg = BMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK & 0xFFFF) | WRMASK; \
+                      PORT->Group[1].WRCONFIG.reg = (BMASK & 0xFFFF) | WRMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK>>16) | WRMASK | (1<<31); \
+                        }
+#define setReadDir()  { PORT->Group[0].DIRCLR.reg = AMASK;PORT->Group[1].DIRCLR.reg = BMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK & 0xFFFF) | RDMASK; \
+                      PORT->Group[1].WRCONFIG.reg = (BMASK & 0xFFFF) | RDMASK; \
+                      PORT->Group[0].WRCONFIG.reg = (AMASK>>16) | RDMASK | (1<<31); \
+                        }
+#define write8(x)     { write_8(x); WR_ACTIVE; WR_STROBE; }
+#define write16(x)    { uint8_t h = (x)>>8, l = x; write8(h); write8(l); }
+#define READ_8(dst)   { RD_STROBE; dst = read_8(); RD_IDLE; }
+#define READ_16(dst)  { uint8_t hi; READ_8(hi); READ_8(dst); dst |= (hi << 8); }
+ // Shield Control macros.
+#define PIN_LOW(port, pin)    (port).OUTCLR.reg = (1<<(pin))
+#define PIN_HIGH(port, pin)   (port).OUTSET.reg = (1<<(pin))
+#define PIN_OUTPUT(port, pin) (port).DIR.reg |= (1<<(pin))
+
 // #########################    ###################
