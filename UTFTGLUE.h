@@ -55,7 +55,6 @@ class UTFTGLUE : public MCUFRIEND_kbv
 //         if (ID == 0x9327 && orientation == LANDSCAPE) orientation = 3;
         MCUFRIEND_kbv::begin(ID);
         MCUFRIEND_kbv::setRotation(_orient = orientation);
-        _radius = 4;
     }
     void clrScr() { MCUFRIEND_kbv::fillScreen(0x0000);}
     void drawPixel(int x, int y) { MCUFRIEND_kbv::drawPixel(x, y, _fcolor);}
@@ -68,11 +67,11 @@ class UTFTGLUE : public MCUFRIEND_kbv
         if (h < 0) { y1 = y2; h = -h; }
         MCUFRIEND_kbv::drawRect(x1, y1, w, h, _fcolor);
     }
-    void drawRoundRect(int x1, int y1, int x2, int y2) {
+    void drawRoundRect(int x1, int y1, int x2, int y2, int radius) {
         int w = x2 - x1 + 1, h = y2 - y1 + 1;
         if (w < 0) { x1 = x2; w = -w; }
         if (h < 0) { y1 = y2; h = -h; }
-        MCUFRIEND_kbv::drawRoundRect(x1, y1, w, h, _radius, _fcolor);
+        MCUFRIEND_kbv::drawRoundRect(x1, y1, w, h, radius, _fcolor);
     }
     void fillRect(int x1, int y1, int x2, int y2) {
         int w = x2 - x1 + 1, h = y2 - y1 + 1;
@@ -80,11 +79,11 @@ class UTFTGLUE : public MCUFRIEND_kbv
         if (h < 0) { y1 = y2; h = -h; }
         MCUFRIEND_kbv::fillRect(x1, y1, w, h, _fcolor);
     }
-    void fillRoundRect(int x1, int y1, int x2, int y2) {
+    void fillRoundRect(int x1, int y1, int x2, int y2, int radius) {
         int w = x2 - x1 + 1, h = y2 - y1 + 1;
         if (w < 0) { x1 = x2; w = -w; }
         if (h < 0) { y1 = y2; h = -h; }
-        MCUFRIEND_kbv::fillRoundRect(x1, y1, w, h, _radius, _fcolor);
+        MCUFRIEND_kbv::fillRoundRect(x1, y1, w, h, radius, _fcolor);
     }
     void drawCircle(int x, int y, int radius) { MCUFRIEND_kbv::drawCircle(x, y, radius, _fcolor);}
     void fillCircle(int x, int y, int radius) { MCUFRIEND_kbv::fillCircle(x, y, radius, _fcolor);}
@@ -155,7 +154,6 @@ class UTFTGLUE : public MCUFRIEND_kbv
     uint16_t _fcolor;
     uint16_t _bcolor;
 //    uint8_t _ascend, _descend, _dig_wid;
-    uint8_t _radius;
     uint8_t _orient;
     void settextcursor(char *st, int x, int y, int pad = 0) {
         int16_t pos, x1, y1;
