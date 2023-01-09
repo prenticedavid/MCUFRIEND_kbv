@@ -67,7 +67,7 @@ class UTFTGLUE : public MCUFRIEND_kbv
         if (h < 0) { y1 = y2; h = -h; }
         MCUFRIEND_kbv::drawRect(x1, y1, w, h, _fcolor);
     }
-    void drawRoundRect(int x1, int y1, int x2, int y2, int radius) {
+    void drawRoundRect(int x1, int y1, int x2, int y2, int radius = 4) {
         int w = x2 - x1 + 1, h = y2 - y1 + 1;
         if (w < 0) { x1 = x2; w = -w; }
         if (h < 0) { y1 = y2; h = -h; }
@@ -79,7 +79,7 @@ class UTFTGLUE : public MCUFRIEND_kbv
         if (h < 0) { y1 = y2; h = -h; }
         MCUFRIEND_kbv::fillRect(x1, y1, w, h, _fcolor);
     }
-    void fillRoundRect(int x1, int y1, int x2, int y2, int radius) {
+    void fillRoundRect(int x1, int y1, int x2, int y2, int radius = 4) {
         int w = x2 - x1 + 1, h = y2 - y1 + 1;
         if (w < 0) { x1 = x2; w = -w; }
         if (h < 0) { y1 = y2; h = -h; }
